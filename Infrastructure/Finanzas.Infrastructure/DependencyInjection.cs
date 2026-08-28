@@ -1,3 +1,4 @@
+using Finanzas.Application.Interfaces.IServices;
 using Finanzas.Domain.Interfaces;
 using Finanzas.Infrastructure.Identidad;
 using Finanzas.Infrastructure.Persistencia;
@@ -57,6 +58,14 @@ public static class DependencyInjection
         services.AddScoped<IUsuarioRepository, UsuarioRepository>();
         services.AddScoped<ICategoriaRepository, CategoriaRepository>();
         services.AddScoped<IConfiguracionRepository, ConfiguracionRepository>();
+
+        // Puente de hashing: Application pide IServicioHashPassword sin saber
+        // que detrás está el hasher de Identity (RNF-02).
+        services.AddScoped<IServicioHashPassword, ServicioHashPassword>();
+
+        // Puente de verificación de email: Application pide un token sin
+        // saber que detrás está UserManager (RF-26).
+        services.AddScoped<IServicioVerificacionEmail, ServicioVerificacionEmail>();
 
         return services;
     }

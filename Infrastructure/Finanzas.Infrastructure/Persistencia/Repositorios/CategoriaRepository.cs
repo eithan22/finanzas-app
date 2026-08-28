@@ -29,4 +29,9 @@ public class CategoriaRepository : RepositorioBase<Categoria>, ICategoriaReposit
             .OrderBy(c => c.Nombre)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task AgregarVariasAsync(IEnumerable<Categoria> categorias, CancellationToken cancellationToken = default)
+    {
+        await Contexto.Categorias.AddRangeAsync(categorias, cancellationToken);
+    }
 }
