@@ -77,6 +77,10 @@ public static class DependencyInjection
         // saber cómo se firma (RF-27).
         services.AddScoped<IServicioJwt, ServicioJwt>();
 
+        // Puente de recuperación de contraseña: Application pide generar y
+        // canjear un token sin saber que detrás está UserManager (RF-29).
+        services.AddScoped<IServicioRecuperacionPassword, ServicioRecuperacionPassword>();
+
         // Validación del JWT en cada request autenticado. Los parámetros se
         // leen de IConfiguration recién cuando se resuelven las opciones
         // (no al llamar AddInfrastructure), así esta firma sigue sin

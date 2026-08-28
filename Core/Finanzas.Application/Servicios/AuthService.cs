@@ -19,10 +19,14 @@ public class AuthService : IAuthService
     private readonly IServicioHashPassword _servicioHashPassword;
     private readonly IServicioVerificacionEmail _servicioVerificacionEmail;
     private readonly IServicioJwt _servicioJwt;
+    private readonly IServicioRecuperacionPassword _servicioRecuperacionPassword;
     private readonly IMapperUsuario _mapperUsuario;
     private readonly IMapperCategoria _mapperCategoria;
     private readonly IValidator<RegistrarUsuarioDto> _registrarValidador;
     private readonly IValidator<LoginDto> _loginValidador;
+    private readonly IValidator<SolicitarRecuperacionDto> _solicitarRecuperacionValidador;
+    private readonly IValidator<RestablecerPasswordDto> _restablecerPasswordValidador;
+    private readonly IValidator<EliminarCuentaDto> _eliminarCuentaValidador;
 
     public AuthService(
         IUsuarioRepository usuarioRepository,
@@ -33,10 +37,14 @@ public class AuthService : IAuthService
         IServicioHashPassword servicioHashPassword,
         IServicioVerificacionEmail servicioVerificacionEmail,
         IServicioJwt servicioJwt,
+        IServicioRecuperacionPassword servicioRecuperacionPassword,
         IMapperUsuario mapperUsuario,
         IMapperCategoria mapperCategoria,
         IValidator<RegistrarUsuarioDto> registrarValidador,
-        IValidator<LoginDto> loginValidador)
+        IValidator<LoginDto> loginValidador,
+        IValidator<SolicitarRecuperacionDto> solicitarRecuperacionValidador,
+        IValidator<RestablecerPasswordDto> restablecerPasswordValidador,
+        IValidator<EliminarCuentaDto> eliminarCuentaValidador)
     {
         _usuarioRepository = usuarioRepository;
         _configuracionRepository = configuracionRepository;
@@ -46,10 +54,14 @@ public class AuthService : IAuthService
         _servicioHashPassword = servicioHashPassword;
         _servicioVerificacionEmail = servicioVerificacionEmail;
         _servicioJwt = servicioJwt;
+        _servicioRecuperacionPassword = servicioRecuperacionPassword;
         _mapperUsuario = mapperUsuario;
         _mapperCategoria = mapperCategoria;
         _registrarValidador = registrarValidador;
         _loginValidador = loginValidador;
+        _solicitarRecuperacionValidador = solicitarRecuperacionValidador;
+        _restablecerPasswordValidador = restablecerPasswordValidador;
+        _eliminarCuentaValidador = eliminarCuentaValidador;
     }
 
     public async Task<UsuarioResponseDto> RegistrarAsync(RegistrarUsuarioDto dto, CancellationToken cancellationToken = default)
@@ -149,5 +161,55 @@ public class AuthService : IAuthService
             ExpiraEn = expiraEn,
             RefreshToken = refreshToken
         };
+    }
+
+    public async Task SolicitarRecuperacionAsync(SolicitarRecuperacionDto dto, CancellationToken cancellationToken = default)
+    {
+        await _solicitarRecuperacionValidador.ValidateAndThrowAsync(dto, cancellationToken);
+
+        var usuario = await _usuarioRepository.ObtenerPorEmailAsync(dto.Email, cancellationToken);
+        if (usuario is null)
+        {
+            // Anti-enumeración: no revela si el email existe.
+            return;
+        }
+
+        // TODO(Fase 4 - proveedor de email pendiente de elegir): enviar el
+        // token generado al email del usuario.
+        await _servicioRecuperacionPassword.GenerarTokenAsync(usuario.Id, cancellationToken);
+    }
+
+    public async Task RestablecerPasswordAsync(RestablecerPasswordDto dto, CancellationToken cancellationToken = default)
+    {
+        await _restablecerPasswordValidador.ValidateAndThrowAsync(dto, cancellationToken);
+
+        var usuario = await _usuarioRepository.ObtenerPorEmailAsync(dto.Email, cancellationToken)
+            ?? throw new TokenRecuperacionInvalidoException();
+
+        var exito = await _servicioRecuperacionPassword.RestablecerAsync(
+            usuario.Id, dto.Token, dto.NuevoPassword, cancellationToken);
+
+        if (!exito)
+        {
+            throw new TokenRecuperacionInvalidoException();
+        }
+    }
+
+    public async Task EliminarCuentaAsync(Guid usuarioId, EliminarCuentaDto dto, CancellationToken cancellationToken = default)
+    {
+        await _eliminarCuentaValidador.ValidateAndThrowAsync(dto, cancellationToken);
+
+        var usuario = await _usuarioRepository.ObtenerPorIdAsync(usuarioId, cancellationToken)
+            ?? throw new RecursoNoEncontradoException(nameof(Usuario), usuarioId);
+
+        if (!_servicioHashPassword.Verificar(dto.Password, usuario.PasswordHash))
+        {
+            throw new CredencialesInvalidasException();
+        }
+
+        // Borra solo la fila del usuario: Categoria, Configuracion y
+        // RefreshTokens caen por la cascada definida en el modelo (RF-31).
+        _usuarioRepository.Eliminar(usuario);
+        await _unitOfWork.GuardarCambiosAsync(cancellationToken);
     }
 }

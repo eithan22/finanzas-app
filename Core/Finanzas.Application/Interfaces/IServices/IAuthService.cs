@@ -9,4 +9,10 @@ public interface IAuthService
     Task<LoginResponseDto> LoginAsync(LoginDto dto, CancellationToken cancellationToken = default);
 
     Task<LoginResponseDto> RefrescarAsync(string refreshToken, CancellationToken cancellationToken = default);
+
+    Task SolicitarRecuperacionAsync(SolicitarRecuperacionDto dto, CancellationToken cancellationToken = default);
+
+    Task RestablecerPasswordAsync(RestablecerPasswordDto dto, CancellationToken cancellationToken = default);
+
+    Task EliminarCuentaAsync(Guid usuarioId, EliminarCuentaDto dto, CancellationToken cancellationToken = default);
 }

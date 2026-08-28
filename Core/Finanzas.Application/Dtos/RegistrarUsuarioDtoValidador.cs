@@ -15,12 +15,6 @@ public class RegistrarUsuarioDtoValidador : AbstractValidator<RegistrarUsuarioDt
             .NotEmpty()
             .EmailAddress();
 
-        RuleFor(x => x.Password)
-            .NotEmpty()
-            .MinimumLength(8)
-            .Matches("[A-Z]").WithMessage("La contraseña debe tener al menos una mayúscula.")
-            .Matches("[a-z]").WithMessage("La contraseña debe tener al menos una minúscula.")
-            .Matches("[0-9]").WithMessage("La contraseña debe tener al menos un número.")
-            .Matches("[^a-zA-Z0-9]").WithMessage("La contraseña debe tener al menos un símbolo.");
+        RuleFor(x => x.Password).ContraseñaSegura();
     }
 }

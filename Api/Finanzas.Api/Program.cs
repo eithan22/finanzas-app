@@ -1,4 +1,6 @@
+using Finanzas.Api.Servicios;
 using Finanzas.Application;
+using Finanzas.Application.Interfaces.IServices;
 using Finanzas.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,6 +10,10 @@ builder.Services.AddControllers();
 
 // Servicios de negocio, validadores y mappers (ver Finanzas.Application).
 builder.Services.AddApplication();
+
+// Lee el UsuarioId del JWT autenticado (RF-28).
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IUsuarioActualService, UsuarioActualService>();
 
 // Base de datos, Identity y repositorios (ver Finanzas.Infrastructure).
 builder.Services.AddInfrastructure(
