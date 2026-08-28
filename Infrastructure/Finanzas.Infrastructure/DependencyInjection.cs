@@ -1,11 +1,16 @@
+using System.Text;
 using Finanzas.Application.Interfaces.IServices;
 using Finanzas.Domain.Interfaces;
 using Finanzas.Infrastructure.Identidad;
 using Finanzas.Infrastructure.Persistencia;
 using Finanzas.Infrastructure.Persistencia.Repositorios;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Finanzas.Infrastructure;
 
@@ -58,6 +63,7 @@ public static class DependencyInjection
         services.AddScoped<IUsuarioRepository, UsuarioRepository>();
         services.AddScoped<ICategoriaRepository, CategoriaRepository>();
         services.AddScoped<IConfiguracionRepository, ConfiguracionRepository>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
         // Puente de hashing: Application pide IServicioHashPassword sin saber
         // que detrás está el hasher de Identity (RNF-02).
@@ -66,6 +72,33 @@ public static class DependencyInjection
         // Puente de verificación de email: Application pide un token sin
         // saber que detrás está UserManager (RF-26).
         services.AddScoped<IServicioVerificacionEmail, ServicioVerificacionEmail>();
+
+        // Puente de JWT: Application pide un token de acceso/refresh sin
+        // saber cómo se firma (RF-27).
+        services.AddScoped<IServicioJwt, ServicioJwt>();
+
+        // Validación del JWT en cada request autenticado. Los parámetros se
+        // leen de IConfiguration recién cuando se resuelven las opciones
+        // (no al llamar AddInfrastructure), así esta firma sigue sin
+        // depender de IConfiguration.
+        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer();
+
+        services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+            .Configure<IConfiguration>((opciones, configuracion) =>
+            {
+                opciones.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = configuracion["Jwt:Issuer"],
+                    ValidateAudience = true,
+                    ValidAudience = configuracion["Jwt:Audience"],
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuracion["Jwt:Key"]!)),
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                };
+            });
 
         return services;
     }

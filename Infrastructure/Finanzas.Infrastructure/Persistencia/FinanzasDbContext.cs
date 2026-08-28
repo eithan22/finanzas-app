@@ -22,6 +22,8 @@ public class FinanzasDbContext : IdentityUserContext<ApplicationUser, Guid>
 
     public DbSet<Configuracion> Configuraciones => Set<Configuracion>();
 
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Primero el mapeo de Identity (tablas AspNet*), después el nuestro.
