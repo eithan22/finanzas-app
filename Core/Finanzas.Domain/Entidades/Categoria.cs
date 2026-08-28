@@ -12,9 +12,11 @@ namespace Finanzas.Domain.Entidades;
 public class Categoria : EntidadBase
 {
     
-    // Dueño de la categoría (RF-28: aislamiento por usuario)
+    // Dueño de la categoría (RF-28: aislamiento por usuario).
+    // Solo el Id: no hay propiedad de navegación a Usuario porque el usuario
+    // se persiste a través de ASP.NET Identity y esa navegación no podría
+    // cargarse nunca desde EF.
     public Guid UsuarioId { get; set; }
-    public Usuario Usuario { get; set; } = null!;
 
     public string Nombre { get; set; } = string.Empty;
 

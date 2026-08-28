@@ -11,8 +11,9 @@ namespace Finanzas.Domain.Entidades;
 public class Configuracion
 {
     // PK y FK a la vez: garantiza la relación 1:1 con Usuario.
+    // Sin propiedad de navegación a Usuario por el mismo motivo que en
+    // Categoria: el usuario vive detrás de ASP.NET Identity.
     public Guid UsuarioId { get; set; }
-    public Usuario Usuario { get; set; } = null!;
 
     // Moneda única del usuario (ej. "ARS", "USD"). Mono-moneda.
     public string Moneda { get; set; } = string.Empty;

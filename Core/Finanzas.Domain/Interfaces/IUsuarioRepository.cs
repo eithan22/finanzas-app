@@ -4,14 +4,12 @@ namespace Finanzas.Domain.Interfaces;
 
 
 // Contrato de acceso a datos para Usuario. La implementación vive en
-// Infrastructure (EF Core).
+// Infrastructure (EF Core) y es el único punto del sistema que conoce
+// ASP.NET Identity: por acá solo entra y sale Usuario de dominio.
 
-public interface IUsuarioRepository
+public interface IUsuarioRepository : IRepositorioBase<Usuario>
 {
     Task<Usuario?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Usuario?> ObtenerPorEmailAsync(string email, CancellationToken cancellationToken = default);
     Task<bool> ExisteEmailAsync(string email, CancellationToken cancellationToken = default);
-    Task AgregarAsync(Usuario usuario, CancellationToken cancellationToken = default);
-    void Actualizar(Usuario usuario);
-    void Eliminar(Usuario usuario);
 }
