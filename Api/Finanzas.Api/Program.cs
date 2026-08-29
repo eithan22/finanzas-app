@@ -3,8 +3,14 @@ using Finanzas.Api.Servicios;
 using Finanzas.Application;
 using Finanzas.Application.Interfaces.IServices;
 using Finanzas.Infrastructure;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Logging estructurado: la configuración completa (niveles, sinks) vive en appsettings.
+builder.Services.AddSerilog((services, loggerConfig) => loggerConfig
+    .ReadFrom.Configuration(builder.Configuration)
+    .ReadFrom.Services(services));
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -30,6 +36,9 @@ var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 app.UseExceptionHandler();
+
+// Loguea cada request (método, ruta, status, duración) sin código manual por endpoint.
+app.UseSerilogRequestLogging();
 
 app.UseHttpsRedirection();
 
