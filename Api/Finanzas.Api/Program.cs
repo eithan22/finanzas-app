@@ -3,6 +3,7 @@ using Finanzas.Api.Servicios;
 using Finanzas.Application;
 using Finanzas.Application.Interfaces.IServices;
 using Finanzas.Infrastructure;
+using Microsoft.OpenApi;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,10 +15,30 @@ builder.Services.AddSerilog((services, loggerConfig) => loggerConfig
 
 // Add services to the container.
 builder.Services.AddControllers();
+builder.Services.AddAuthorization();
 
 // Traduce cualquier excepción no atrapada a una respuesta ProblemDetails.
 builder.Services.AddExceptionHandler<ManejadorExcepciones>();
 builder.Services.AddProblemDetails();
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(opciones =>
+{
+    opciones.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Ingresá el token de acceso (sin el prefijo 'Bearer ')."
+    });
+
+    opciones.AddSecurityRequirement(document => new()
+    {
+        [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+    });
+});
 
 // Servicios de negocio, validadores y mappers (ver Finanzas.Application).
 builder.Services.AddApplication();
@@ -33,6 +54,12 @@ builder.Services.AddInfrastructure(
             "Falta la cadena de conexión 'FinanzasDb' en la configuración."));
 
 var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 // Configure the HTTP request pipeline.
 app.UseExceptionHandler();

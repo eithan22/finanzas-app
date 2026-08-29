@@ -24,6 +24,7 @@ public class AuthService : IAuthService
     private readonly IMapperCategoria _mapperCategoria;
     private readonly IValidator<RegistrarUsuarioDto> _registrarValidador;
     private readonly IValidator<LoginDto> _loginValidador;
+    private readonly IValidator<ConfirmarEmailDto> _confirmarEmailValidador;
     private readonly IValidator<SolicitarRecuperacionDto> _solicitarRecuperacionValidador;
     private readonly IValidator<RestablecerPasswordDto> _restablecerPasswordValidador;
     private readonly IValidator<EliminarCuentaDto> _eliminarCuentaValidador;
@@ -42,6 +43,7 @@ public class AuthService : IAuthService
         IMapperCategoria mapperCategoria,
         IValidator<RegistrarUsuarioDto> registrarValidador,
         IValidator<LoginDto> loginValidador,
+        IValidator<ConfirmarEmailDto> confirmarEmailValidador,
         IValidator<SolicitarRecuperacionDto> solicitarRecuperacionValidador,
         IValidator<RestablecerPasswordDto> restablecerPasswordValidador,
         IValidator<EliminarCuentaDto> eliminarCuentaValidador)
@@ -59,6 +61,7 @@ public class AuthService : IAuthService
         _mapperCategoria = mapperCategoria;
         _registrarValidador = registrarValidador;
         _loginValidador = loginValidador;
+        _confirmarEmailValidador = confirmarEmailValidador;
         _solicitarRecuperacionValidador = solicitarRecuperacionValidador;
         _restablecerPasswordValidador = restablecerPasswordValidador;
         _eliminarCuentaValidador = eliminarCuentaValidador;
@@ -161,6 +164,27 @@ public class AuthService : IAuthService
             ExpiraEn = expiraEn,
             RefreshToken = refreshToken
         };
+    }
+
+    public async Task ConfirmarEmailAsync(ConfirmarEmailDto dto, CancellationToken cancellationToken = default)
+    {
+        await _confirmarEmailValidador.ValidateAndThrowAsync(dto, cancellationToken);
+
+        // Si el UsuarioId no existe, ConfirmarAsync (Infrastructure) tiraría
+        // una InvalidOperationException que caería como 500 — se detecta acá
+        // antes y se devuelve el mismo "token inválido" que un token vencido,
+        // mismo criterio anti-enumeración que ya usa la recuperación de contraseña.
+        var usuario = await _usuarioRepository.ObtenerPorIdAsync(dto.UsuarioId, cancellationToken);
+        if (usuario is null)
+        {
+            throw new TokenVerificacionInvalidoException();
+        }
+
+        var exito = await _servicioVerificacionEmail.ConfirmarAsync(dto.UsuarioId, dto.Token, cancellationToken);
+        if (!exito)
+        {
+            throw new TokenVerificacionInvalidoException();
+        }
     }
 
     public async Task SolicitarRecuperacionAsync(SolicitarRecuperacionDto dto, CancellationToken cancellationToken = default)

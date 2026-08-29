@@ -47,6 +47,7 @@ public class ManejadorExcepciones : IExceptionHandler
             CredencialesInvalidasException or
             CuentaNoVerificadaException or
             TokenRecuperacionInvalidoException or
+            TokenVerificacionInvalidoException or
             RefreshTokenInvalidoException => (StatusCodes.Status401Unauthorized, "No autorizado"),
             DomainException => (StatusCodes.Status400BadRequest, "Solicitud inválida"),
             _ => (StatusCodes.Status500InternalServerError, "Error interno")
