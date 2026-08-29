@@ -1,3 +1,4 @@
+using Finanzas.Api.Middleware;
 using Finanzas.Api.Servicios;
 using Finanzas.Application;
 using Finanzas.Application.Interfaces.IServices;
@@ -7,6 +8,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+
+// Traduce cualquier excepción no atrapada a una respuesta ProblemDetails.
+builder.Services.AddExceptionHandler<ManejadorExcepciones>();
+builder.Services.AddProblemDetails();
 
 // Servicios de negocio, validadores y mappers (ver Finanzas.Application).
 builder.Services.AddApplication();
@@ -24,6 +29,8 @@ builder.Services.AddInfrastructure(
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+app.UseExceptionHandler();
+
 app.UseHttpsRedirection();
 
 app.UseAuthentication();

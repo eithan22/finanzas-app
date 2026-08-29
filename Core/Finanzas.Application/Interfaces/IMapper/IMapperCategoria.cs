@@ -1,3 +1,4 @@
+using Finanzas.Application.Dtos;
 using Finanzas.Domain.Entidades;
 
 namespace Finanzas.Application.Interfaces.IMapper;
@@ -9,4 +10,10 @@ namespace Finanzas.Application.Interfaces.IMapper;
 public interface IMapperCategoria
 {
     IReadOnlyList<Categoria> CrearPorDefecto(Guid usuarioId);
+
+    Categoria ACrear(Guid usuarioId, CrearCategoriaDto dto);
+
+    void AplicarCambios(Categoria categoria, ActualizarCategoriaDto dto);
+
+    CategoriaResponseDto AResponseDto(Categoria categoria);
 }

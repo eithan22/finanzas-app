@@ -18,8 +18,11 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IServicioCategoria, ServicioCategoria>();
+        services.AddScoped<IServicioConfiguracion, ServicioConfiguracion>();
         services.AddScoped<IMapperUsuario, MapperUsuario>();
         services.AddScoped<IMapperCategoria, MapperCategoria>();
+        services.AddScoped<IMapperConfiguracion, MapperConfiguracion>();
 
         // Registra todos los validadores de FluentValidation del ensamblado
         // (hoy solo RegistrarUsuarioDtoValidador; los que se agreguen después
